@@ -13,15 +13,7 @@ pdf.options(encoding='ISOLatin2')
 
 # Zadanie 1
 
-## Treść zadania
-
-* Dopasuj do danych rozkład Poissona - wyestymuj parametr $\lambda$.
-* Metodą bootstrapu nieparametrycznego oszacuj odchylenie standardowe 
-estymatora parametru $\lambda$.
-* Sprawdź zgodność rozkładu o wyestymowanym parametrze $\lambda$
-z zarejestrowanymi danymi porównując graficznie empiryczną i teoretyczną 
-funkcję prawdopodobieństwa. Użyj funkcji table() i dpois() analogicznie 
-jak w przykładzie 4 laboratorium 1.
+Rozkład Poissona dopasowany do danych. Estymacja parametry $\lambda$\. Metoda bootstrapu nieparametrycznego oraz oszacowanie odchylenie standardowe estymatora parametry $\lambda$\. 
 
 
 ## Rozwiązanie
@@ -83,18 +75,7 @@ points(dpois(Arg, lambda_1) ~ Arg, col = 'red')
 
 
 # Zadanie 2
-
-## Treść zadania
-
-* Dla wybranej jednej spółki notowanej na GPW oblicz wartości procentowych
-zmian najwyższych cen w dniu (high) i wykreśl ich histogram – zweryfikuj
-zgrubnie, czy możemy przyjąć, że procentowe zmiany najwyższych cen w dniu mają
-rozkład normalny.
-* Wyestymuj wartość średnią oraz wariancję procentowych zmian  najwyższych cen
-w dniu dla wybranej spółki.
-* Zakładając, że zmiany najwyższych cen w dniu mają rozkład normalny wyznacz
-90%, 95% i 99% przedziały ufności dla wartości średniej i wariancji
-procentowych zmian najwyższych cen w dniu dla wybranej spółki.
+Obliczenie wartości procentowych zmian najwyższych w dniu dla spółki KGHM. Wyznaczenie przedziałów ufności 90%, 95%, 99% dla wartości średniej i wariancji zmian procentowych najwyższych cen dnia.
 
 
 ## Rozwiązanie
@@ -190,35 +171,11 @@ ci_var <- c((n-1)*S^2/qchisq(1-b,n-1), (n-1)*S^2/qchisq(a,n-1))
 
 # Zadanie 3
 
-## Treść zadania
+Rzucamy pinezką (20 razy, 40 razy), ktora upada ostrzem w górę lub w dół. Zdarzenie opisujemy rozkładem Bernoulliego z parametrem $p$, gdzie parametr $p$ to:
+- prawdopodobieństwo upadnięcia pinezki ostrzem do góry
+- rozkład opisany rozkładem Beta o parametrach$\alpha$ i $\beta$
 
-Rzucona pinezka upada ostrzem do dołu lub do góry. Doświadczenie to można
-opisać rozkładem Bernoulliego
-z parametrem $p$ będącym prawdopodobieństwem tego, że pinezka upadnie ostrzem
-do góry. Rozkład parametru $p$ można opisać rozkładem Beta o parametrach
-$\alpha$ i $\beta$.
-
-* Zaproponuj parametry rozkładu a priori parametru $p$ oraz określ wartość
-oczekiwaną tego rozkładu.
-* Narysuj rozkład a priori parametru $p$.
-* Rzuć pinezką 20 razy i zanotuj wyniki kolejnych rzutów. 
-* Wyznacz i narysuj rozkład a posteriori parametru $p$ oraz oblicz wartość
-bayesowskiego estymatora $\hat{p}$ .
-
-W rozważanym przypadku rozkład aposteriori parametru $p$ jest również rozkładem
-Beta o parametrach:
-
- $$ \alpha_{\textrm{post}} = \alpha_{\textrm{prior}} + \sum_{i=1}^n x_i,\quad
- \beta_{\textrm{post}} = \beta_{\textrm{prior}} + n - \sum_{i=1}^n x_i,\qquad
-  x_i\in\{0,1\}.$$
-
-
-* Rzuć pinezką jeszcze 20 razy i zanotuj wyniki.
-* Wyznacz i narysuj rozkład a posteriori oparty na wszystkich 40 rzutach oraz
-oblicz wartość bayesowskiego estymatora $\hat{p}$ .
-* Porównaj wyniki z wynikami uzyskanymi po pierwszych 20 rzutach.
-* Korzystając ze wzoru na wariancję rozkładu Beta wyznacz i porównaj wariancje
-rozkładu a priori, a posteriori po 20 rzutach i a posteriori po 40 rzutach.
+Proponujemy rozkład a priori parametru $p$, określamy wartość oczekiwaną rozkładu, wyznaczamy rozkład a posteriori parametru $p$ oraz obliczamy wartość bayesowskiego estymatora $\hat{p}$.
 
 
 ## Rozwiązanie
@@ -304,11 +261,7 @@ aposteriori_40 <- a_posteriori*b_posteriori/((a_posteriori+b_posteriori+1)
 ```
 
 
-***
-
 # Zadanie 4
-
-## Rozwiązanie
 
 1. Wczytuję plik 'fotony.txt':
 

@@ -19,22 +19,7 @@ przyjęta wartość $\alpha$ = 0.05.
 
 # Zadanie 1
 
-## Treść zadania
-
-Korzystając z metod analizy wariancji, dla wybranej spółki notowanej na GPW
-zweryfikuj hipotezę o równości wartości średnich procentowych zmian cen
-zamknięcia:
-
-* porównując średnie w ostatnich sześciu miesiącach,
-* porównując średnie w ostatnich trzech miesiącach.
-
-Wskazówki:
-
-* obliczenie procentowych zmian cen zamknięcia:
-dane$close_ch = with(dane, c(NA, 100*diff(close)/close[-length(close)]))
-
-* przykładowy sposób wczytania danych dot. np. sierpnia 2019:
-x1 = with(dane, close_ch[format(date, '%Y-%m') == '2019-08'])
+Dla spółki ZUE metodą analizy wariancji weryfikujemy hipotezę o równości wartości średnich procentowych zmian cen zamknięcia. Porównujemy średnie z ostatnich trzech oraz sześciu miesięcy.
 
 ## Rozwiązanie
 
@@ -250,16 +235,16 @@ wcześniej podjętych decyzji o nieodrzuceniu hipotezy H0.
 
 # Zadanie 2
 
-## Treść zadania
+Wyznaczamy zależność indeksu (za pierwszy kwartał 2020) WIG20 od kursów zamknięcia innych spółek:
+- COMARCH
+- ELZAB
+- GETIN
+- PEKAO
+- PGNIG
+- PZU
 
-* Korzystając z regresji liniowej wyznacz zależność indeksu WIG20 od kursów 
-zamknięcia spółek COMARCH, ELZAB, GETIN, PEKAO, PGNIG, PZU dla danych z 
-pierwszego kwartału roku 2020.
+Oceniamy wpływ/istotność dla poszczególnych zmiennych modelu.
 
-* Oceń istotność poszczególnych zmiennych objaśniających w tak skonstruowanym 
-modelu.
-* Przeprowadź analogiczne analizy w przypadku uwzględnienia w modelu mniejszej 
-ilości spółek: COMARCH, ELZAB, GETIN.
 
 ## Rozwiązanie
 
@@ -444,31 +429,10 @@ mamy podstawę do odrzucenia hipotezy H0 dla wszystkich spółek.
 
 # Zadanie 3
 
-## Treść zadania
-
-Korzystając z regresji liniowej dla danych z pierwszego kwartału roku 2020 
-zbadaj:
-
-* zależność kursu CHF od kursów EUR, USD, GBP, JPY (wykorzystaj dane z pliku 
-mstnbp.zip),
-* zależność indeksu WIG20 od indeksów DAX, DJIA, NIKKEI, FT-SE100 
-(wykorzystaj dane z pliku mstzgr.zip*),
-* zależność pomiędzy kursem USD a indeksami giełdowymi DAX, DJIA, 
-NIKKEI, FT-SE100.
-
-Uwaga: daty notowań w różnych krajach mogą różnić się. 
-Wskazówka dot. stworzenia odpowiedniej ramki z danymi. 
-
-* Stworzenie podramek, np. dla DJIA:
-dane = read_mst('mstzgr.zip', 'DJIA.mst')
-DJIA_df = subset( dane, date >= '2020-01-01' & date < '2020-04-01', 
-select = c('date', 'close'))
-
-* Połączenie danych:
-ALL_df = merge(DJIA_df, NIKKEI_df, by = 'date')
-ALL_df = merge(ALL_df, FT_SE100_df, by = 'date')
-
-itd.
+Przy pomocy regresji liniowej (dla danych za pierwszy kwartał 2020) badamy:
+- zależność kursu CHF od pozostałych wyznaczonych w modelu
+- zależność WIG20 od DAX, DJIA, NIKKEI, FT-SE100
+- zależność pomiędzy USD a DAX, DJIA, NIKKEI, FT-SE100
 
 ## Rozwiązanie
 
@@ -638,8 +602,6 @@ summary(lm_res2)
 
 Podsumowanie:
 
-Podsumowanie:
-
 Założenie:
 H0 - wsppółczynniki są zerowe.
 H1 - współczynniki są różne od zera.
@@ -659,19 +621,12 @@ Hipotezę H0 odrzucimy w pozostałych przypadkach.
 
 ## Treść zadania
 
-W pliku sprzedaz.txt znajdują się dane dotyczące wydatków na reklamę pewnej 
-firmy (w tys. zł) i wartości sprzedaży jej produktów (w mln zł) w poszczególnych 
-kwartałach.
+W pewnej firmie mamy określone wydatki na reklamę liczone w tys. zł oraz wartość sprzedaży produktów w mln zł (dane podzielone kwartalnie).
 
-* Metodą regresji liniowej wyznacz zależność pomiędzy wartością sprzedaży 
-a wydatkami na reklamę. Na jednym wykresie narysuj punkty odpowiadające danym 
-oraz prostą regresji. 
-
-* Oblicz prognozowane wartości sprzedaży, jeśli wydatki na reklamę będą 
-wynosiły: 300, 500, 700 tys. zł.
-
-* Oszacuj odchylenie standardowe błędu z jakim wyznaczono prognozowane wartości 
-sprzedaży dla poszczególnych wartości wydatków na reklamę.
+Wyznaczamy:
+- zależność wartości sprzedaży od wydatków na reklamy (metodą regresji liniowej)
+- prognozy wartości sprzedaży, gdy wydatki na reklamy będą wynosiły 200 tys zł, 500 tys zł, 700 tys zł
+- odchylenie standardowe błędu wyznaczonych prognozowanych wartości sprzedaży dla wartości wydatków na reklamy
 
 ## Rozwiązanie
 
@@ -754,17 +709,10 @@ Dla wydatków na reklamę równych:
 
 # Zadanie 5 
 
-## Treść zadania
-
-* Dla danych z pliku sprzedaz.txt zbadaj czy lepszym modelem zależności między 
-wartością wydatków na reklamę (w tys. zł) a wartością sprzedaży (w mln zł) 
-byłaby zależność kwadratowa.
-
-* Nanieś odpowiednią linię przedstawiającą tę zależność na rysunek z danymi 
-oraz prostą regresji wyznaczoną w poprzednim punkcie.
+## TModel zależności między wartością wydatków na reklamy a wartością sprzedaży - zależność kwadratowa. Porównanie względem poprzednio użyego modelu.
 
 
-1. Wykonuję obliczenia metodą lm:
+ykonuję obliczenia metodą lm:
 
 ```{r}
 #dane x oraz y z zadania nr 4

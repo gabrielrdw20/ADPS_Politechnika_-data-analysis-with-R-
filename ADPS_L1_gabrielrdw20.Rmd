@@ -13,14 +13,11 @@ pdf.options(encoding='ISOLatin2')
 
 # Zadanie nr 1
 
-### TREŚĆ ZADANIA:
+Dane prezentowane dla dwóch spółek notowanych na giełdzie:
 
-Dla wybranych dwóch spółek:
-
-- sporządź wykresy procentowych zmian kursów zamknięcia w zależności od daty,
-- wykreśl i porównaj histogramy procentowych zmian kursów zamknięcia,
-- wykonaj jeden wspólny rysunek z wykresami pudełkowymi zmian kursów zamknięcia.
-
+- zmiany zamknięcia kursów zależne od daty
+- porównanie histogramów zmian kursów zamkniecia
+- pudełkowy wykres zmian kursów zamknięcia 
 
 ### ROZWIĄZANIE:
 
@@ -131,8 +128,6 @@ SP2 <- (df_MBANK$close_ch= with(df_MBANK, c(NA, 100*diff(close)/close[-length(cl
 ```
 
 
-
-
 * Prównuję obie spółki na jednym wykresie w formie pudełkowej:
 ```{r}
 
@@ -148,18 +143,8 @@ col = c('turquoise', 'tomato')
 
 # Zadanie nr 2
 
-### TREŚĆ ZADANIA:
-
-1. Sporządź wykres liczby katastrof lotniczych w poszczególnych:
-
-  - miesiącach,
-  - dniach,
-  - dniach tygodnia (weekdays()).
-
-2. Narysuj jak w kolejnych latach zmieniały się:
-
-- liczba osób, które przeżyły katastrofy,
-- odsetek osób (w procentach), które przeżyły katastrofy.
+Wykresy katastrof lotniczych (zależnie od miesiąca, dnia, dni tygodnia).
+Prezentacja zmian dotyczących liczby osób, które przeżyły katastrofy.
 
 ### ROZWIĄZANIE:
 
@@ -212,7 +197,6 @@ grid()
 ```
 
 
-
 * Dodaję do danych kolumny z miesiącem:
 ```{r}
 kat$Month = strftime(as.Date(kat$Date, '%m/%d/%Y'), '%m')
@@ -256,22 +240,11 @@ grid()
 
 # Zadanie nr 3
 
-### TREŚĆ ZADANIA:
-
-
-1. Dla dwóch różnych zestawów parametrów rozkładu dwumianowego (rbinom): 
-
-- Binom(20, 0.2)
-- Binom(20, 0.8) 
-
-wygeneruj próby losowe składające się z M = 1000 próbek i narysuj wartości wygenerowanych danych. 
-
-2. Dla poszczególnych rozkładów (zestawów parametrów) narysuj na jednym rysunku empiryczne i teoretyczne (dbinom) funkcje prawdopodobieństwa, a na drugim rysunku empiryczne i teoretyczne (pbinom) dystrybuanty. W obu przypadkach wyskaluj oś odciętych od 0 do 20.
+Próby losowe złożone z M = 1000 próbek dla dwoch różnych zestawów parametru rozkładu dwumianowego
+Prezentacja empirycznych i teorytycznych dystrybuant.
 
 
 ### ROZWIĄZANIE
-### AD. 1
-
 
 * M = 1000 próbek, rozkłady dwumianowe Binom(20, 0.2) i Binom(20, 0.8):
 ```{r}
@@ -290,8 +263,6 @@ plot(p1, main = 'Wartość próbki', xlab = 'Próbka p1')
 ```{r}
 plot(p2, main = 'Wartość próbki', xlab = 'Próbka p2')
 ```
-
-### AD. 2
 
 
 * Funkncja prawdopodobieństwa dla próbki p1:
@@ -312,7 +283,6 @@ ylab = 'f(x)')
 points(dbinom(Arg,20,0.2) ~ Arg, col = 'green')
 
 ```
-
 
 
 * Funkncja prawdopodobieństwa dla próbki p2:
@@ -363,23 +333,14 @@ points(pbinom(Arg,20,0.8) ~ Arg, col = 'red')
 ```
 
 
-
 # Zadanie nr 4
 
-### TREŚĆ ZADANIA:
-1. Dla rozkładu dwumianowego Binom(20, 0.8) wygeneruj trzy próby losowe składające się z M = 100,
-M = 1000 i M = 10000 próbek.
-
-2. Dla poszczególnych prób wykreśl empiryczne i teoretyczne funkcje prawdopodobieństwa, a także
-empiryczne i teoretyczne dystrybuanty.
-
-3. We wszystkich przypadkach oblicz empiryczne wartości średnie i wariancje. Porównaj je z wartościami
-teoretycznymi dla rozkładu Binom(20, 0.8).
+Próby losowe dla rozkładu dwumianowego złożone z  binom(20, 0.8), M = 100, M = 1000 oraz M = 10000. Obliczenie wartości średnich oraz wriancji. Empiryczne oraz teorytyczne:
+- dystrybuanty
+- funkcje prawdopodobieństwa
 
 
 ### ROZWIĄZANIE
-
-### AD. 1
 
 * Próba losowa dla M = 100 próbek
 ```{r}
@@ -396,10 +357,6 @@ p4 = rbinom(1000, size = 20, prob = 0.8)
 ```{r}
 p5 = rbinom(10000, size = 20, prob = 0.8)
 ```
-
-
-### AD. 2
-
 
 * Funckja prawdopodobieństwa (empiryczna i teorytyczna) M = 100 dla próbki p3:
 ```{r}
@@ -431,8 +388,6 @@ lines(dbinom(Arg, size = 20, prob = 0.8) ~ Arg, type = 'h', col = 'red',
 xlab = 'wartość x', ylab = 'funkcja f(x)')
 points(dbinom(Arg, size = 20, prob = 0.8) ~ Arg, col = 'red')
 ```
-
-
 
 
 * Funckja prawdopodobieństwa (empiryczna i teorytyczna) M = 100 dla próbki p3:
@@ -524,20 +479,9 @@ print(parametry)
 
 # Zadanie nr 5
 
-### TREŚĆ ZADANIA:
-
-1. Wygeneruj K = 500 realizacji (powtórzeń) prób losowych składających się z M = 100 próbek pochodzących z rozkładu Binom(20, 0.8).
-2. Dla wszystkich realizacji oblicz wartości średnie i wariancje. Następnie narysuj histogramy wartości
-średnich i histogramy wariancji.
-3. Powtórz eksperymenty dla M = 1000 i M = 10000. Jak zmieniają się histogramy ze zmianą liczby
-próbek?
-
-Wskazówka: mm = replicate(500, mean(rbinom(M, 20, 0.8)))
-
+K prób losowych złożonych z M = 100 z rozkładu binom(20, 0.8) (a także M = 1000, M = 10000). Obliczenie wartości średnich i wariancji.
 
 ### ROZWIĄZANIE
-
-### AD. 1, 2
 
 * Generuję K = 500 prób losowych złożonych z M = 100 próbek Binom(20, 0.8), w tym wartość średnią i wariancję dla wszysktkich realizacji:
 ```{r}
@@ -554,15 +498,11 @@ main = 'histogram wartości średniej z 500 prób dla M = 100')
 
 
 
-
-
 * Tworzę histogram dla wariancji:
 ```{r}
 hist(mv, breaks = 20, prob = T, ylab = 'gęstość',
 main = 'histogram wartości wariancji z 500 prób dla M = 100')
 ```
-
-### AD. 3
 
 
 * Generuję K = 500 prób losowych złożonych z M = 1000 próbek Binom(20, 0.8), w tym wartość średnią i wariancję dla wszysktkich realizacji:
@@ -583,7 +523,6 @@ main = 'histogram wartości średniej z 500 prób dla M = 1000')
 hist(mv1, breaks = 20, prob = T, ylab = 'gęstość',
 main = 'histogram wartości wariancji z 500 prób dla M = 1000')
 ```
-
 
 
 * Generuję K = 500 prób losowych złożonych z M = 1000 próbek Binom(20, 0.8), w tym wartość średnią i wariancję dla wszysktkich realizacji:
@@ -674,7 +613,6 @@ wariancja_zageszczenie <- c(0.8, 2.5, 10.0)
 PODSUMOWANIE_2 <- data.frame(M, srednie_podsumowanie, srednie_zageszczenie, wariancja_podsumowanie, wariancja_zageszczenie)
 print(PODSUMOWANIE_2)
 ```
-
 
 
 * Wnioski:
