@@ -1,0 +1,792 @@
+---
+title: "ADPS 20L --- Ćwiczenie 4 - rozwiązania"
+author: "Gabriel R."
+output:
+  pdf_document: 
+    latex_engine: xelatex
+  html_document: default
+  html_notebook: default
+---
+
+```{r, echo=FALSE}
+pdf.options(encoding='ISOLatin2')
+```
+
+
+Dla wszystkich zadań, gdzie będzie występować $\alpha$ zostaje odgórnie 
+przyjęta wartość $\alpha$ = 0.05.
+
+
+# Zadanie 1
+
+## Treść zadania
+
+Korzystając z metod analizy wariancji, dla wybranej spółki notowanej na GPW
+zweryfikuj hipotezę o równości wartości średnich procentowych zmian cen
+zamknięcia:
+
+* porównując średnie w ostatnich sześciu miesiącach,
+* porównując średnie w ostatnich trzech miesiącach.
+
+Wskazówki:
+
+* obliczenie procentowych zmian cen zamknięcia:
+dane$close_ch = with(dane, c(NA, 100*diff(close)/close[-length(close)]))
+
+* przykładowy sposób wczytania danych dot. np. sierpnia 2019:
+x1 = with(dane, close_ch[format(date, '%Y-%m') == '2019-08'])
+
+## Rozwiązanie
+
+1. Zapisuję plik mstall.zip do katalogu ADPS/Lab4
+```{r}
+if(!file.exists('mstall.zip')) {
+  download.file('http://bossa.pl/pub/metastock/mstock/mstall.zip','mstall.zip')
+}
+```
+
+2. Wybieram spółkę ZUE. Wczytuję plik do zmiennej dane, obliczam procentowy 
+zmiany zamknięcia (dane$close_ch):
+```{r}
+unzip('mstall.zip', 'ZUE.mst')
+dane <- read.csv('ZUE.mst')
+names(dane) <- c('ticker', 'date', 'open', 'high', 'low', 'close', 'vol')
+dane$date = as.Date.character(dane$date, format ='%Y%m%d')
+dane$close_ch = with(dane, c(NA, 100*diff(close)/close[-length(close)]))
+```
+
+
+
+Założenie:
+W celu uniknięcia powtórzeń dla wszystkich obliczeń w zadaniu nr 1 przyjmuję
+poziom istotności $\alpha$ równe 0.05.
+
+
+
+A) Dla 6 miesięcy -------------------------------------------------------------- 
+
+3. Wczytuję zmiany dla wariantu 6-miesięcznego (ostatnie 6 miesięcy):
+```{r}
+x1 <- with(dane, close_ch[format(date, '%Y-%m') == '2020-04'])
+x2 <- with(dane, close_ch[format(date, '%Y-%m') == '2020-03'])
+x3 <- with(dane, close_ch[format(date, '%Y-%m') == '2020-02'])
+x4 <- with(dane, close_ch[format(date, '%Y-%m') == '2020-01'])
+x5 <- with(dane, close_ch[format(date, '%Y-%m') == '2019-12'])
+x6 <- with(dane, close_ch[format(date, '%Y-%m') == '2019-11'])
+```
+
+4. Wyświetlam wykres pudełkowy dla powyższych danych:
+```{r}
+
+wykres_pudelkowy_6mc <- boxplot(x1,x2,x3,x4,x5,x6,
+main = 'ZUE',
+names = c('11-2019', '12-2019', '01-2020', '02-2020', '03-2020', '04-2020'),
+ylab = 'procentowe zmiany cen zamknięcia')
+
+wykres_pudelkowy_6mc
+```
+
+5. Przypisuję dane do zmiennej dane_anova:
+```{r}
+dane_anova = data.frame( dane = c(x1, x2, x3, x4, x5, x6),
+  proba = rep( c('x1', 'x2', 'x3', 'x4', 'x5', 'x6'), 
+  times = c(length(x1), length(x2), length(x3), 
+          length(x4), length(x5), length(x6))) )
+```
+
+6. Sprawdzam hipotezę o równości wariancji w próbach teste Barletta:
+```{r}
+bTest <- bartlett.test(dane~proba, data = dane_anova)
+print(bTest)
+```
+
+Weryfikuję hipotezę H0 wobec hipotezy H1, gdzie:
+H0 - Wariancje prób są takie same.
+H1 - Wariancje prób są różne.
+
+Wniosek:
+Z testu Barletta otrzymaliśmy $/p-value$ równe 0.0006993 (< $\alpha$ = 0.05). 
+Oznacza to, że mamy podstawę do odrzucenia hipotezy H0.
+
+Wg otrzymanego p-value < $\alpha$ powinniśmy odrzucić
+należałoby odrzucić hipotezę H0, niemniej w oparciu o wytyczne podane na
+laboratorium nr 4 przechodzimy do dalszej analizy nie odrzucając H0 (zatem
+możemy wynokać test aov_res).
+
+
+7. Przeprowadzam analizę wariancji przy założeniu normalności rozkładów:
+```{r}
+aov_res <- aov(dane~proba, data = dane_anova)
+summary(aov_res)
+```
+
+Weryfikuję hipotezę H0 wobec hipotezy H1, gdzie:
+H0 - Średnie wartości prób są równe.
+H1 - Przynajmniej jedna ze średnich różna od pozostałych.
+
+Wniosek:
+$P-value$ testu z analizy wariancji na podstawie rozkładu F-Snedecora równe 
+0.802 (>$\alpha$) jednoznacznie wskazuje, że nie ma podstaw do odrzucenia 
+hipotezy H0 mówiącej o równości wartości średnich w  próbach x1, x2, x3, x4, x5
+x6.
+
+8. Korzystając z testu Kruskala-Wallisa przeprowadzam analizę wariancji bez
+zakładania normalności rozkładów:
+```{r}
+kTest <- kruskal.test(dane~proba, data = dane_anova)
+print(kTest)
+```
+
+Weryfikuję hipotezę H0 wobec hipotezy H1, gdzie:
+H0 - Średnie wartości prób są równe.
+H1 - Przynajmniej jedna ze średnich różna od pozostałych.
+
+Wniosek:
+$P-value$ równe 0.5984 (> $/alpha$) jednoznacznie wskazuje, że nie ma podstaw 
+do odrzucenia hipotezy H0 mówiącej o równości wartości średnich.
+
+9. Metodą Tukeya sprawdzam, czy dla którejś z prób jej wartość średnia odbiega 
+od wartości średnich w pozostałych próbach:
+```{r}
+Tukey = TukeyHSD(aov_res)
+print(Tukey)
+plot(Tukey)
+```
+Wniosek:
+Wszystkie przedziały ufności obejmują wartość 0. Jest to dodatkowe potwierdzenie 
+wcześniej podjętych decyzji o nieodrzuceniu hipotezy H0.
+
+B) Dla 3 miesięcy -------------------------------------------------------------- 
+
+1.  Przyjmuję wczytane uprzednio dane dla okresu 3-miesięcznego dla:
+x1, x2, x3.
+
+2. Wyświetlam wykres pudełkowy dla powyższych danych:
+```{r}
+wykres_pudelkowy_3mc <- boxplot(x1,x2,x3,
+main = 'ZUE',
+names = c('02-2020', '03-2020', '04-2020'),
+ylab = 'procentowe zmiany cen zamknięcia')
+
+wykres_pudelkowy_3mc
+```
+
+3. Przypisuję dane do zmiennej dane_anova_2:
+```{r}
+dane_anova_ = data.frame( 
+  dane = c(x1, x2, x3),
+  proba = rep( c('x1', 'x2', 'x3'),times = c(length(x1), length(x2), length(x3))
+  )
+)
+```
+
+4. Sprawdzam hipotezę o równości wariancji w próbach teste Barletta:
+```{r}
+bTest_ <- bartlett.test(dane~proba, data = dane_anova_)
+print(bTest_)
+```
+
+Weryfikuję hipotezę H0 wobec hipotezy H1, gdzie:
+H0 - Wariancje prób są takie same.
+H1 - Wariancje prób są różne.
+
+Wniosek:
+Z testu Barletta otrzymaliśmy $/p-value$ równe 0.002592.  
+
+Wg otrzymanego p-value < $\alpha$ powinniśmy odrzucić
+należałoby odrzucić hipotezę H0, niemniej w oparciu o wytyczne podane na
+laboratorium nr 4 przechodzimy do dalszej analizy nie odrzucając H0 (zatem
+możemy wynokać test aov_res).
+
+
+
+7. Przeprowadzam analizę wariancji przy założeniu normalności rozkładów:
+```{r}
+aov_res_ <- aov(dane~proba, data = dane_anova_)
+summary(aov_res_)
+```
+
+Weryfikuję hipotezę H0 wobec hipotezy H1, gdzie:
+H0 - Średnie wartości prób są równe.
+H1 - Przynajmniej jedna ze średnich różna od pozostałych.
+
+Wniosek:
+$P-value$ testu z analizy wariancji na podstawie rozkładu F-Snedecora równe 
+0.9 (> $alpha$) jednoznacznie wskazuje, że nie ma  podstaw do odrzucenia 
+hipotezy H0 mówiącej o równości wartości średnich w  próbach x1, x2, x3.
+
+
+8. Korzystając z testu Kruskala-Wallisa przeprowadzam analizę wariancji bez
+zakładania normalności rozkładów:
+```{r}
+kTest_ <- kruskal.test(dane~proba, data = dane_anova_)
+print(kTest_)
+```
+
+Weryfikuję hipotezę H0 wobec hipotezy H1, gdzie:
+H0 - Średnie wartości prób są równe.
+H1 - Przynajmniej jedna ze średnich różna od pozostałych.
+
+Wniosek:
+$P-value$ równe 0.416 (> $/alpha$) jednoznacznie wskazuje, że nie ma podstaw do
+odrzucenia hipotezy H0 mówiącej o równości wartości średnich.
+
+
+9. Metodą Tukeya sprawdzam, czy dla którejś z prób jej wartość średnia odbiega 
+od wartości średnich w pozostałych próbach:
+```{r}
+Tukey_ = TukeyHSD(aov_res_)
+print(Tukey_)
+plot(Tukey_)
+```
+
+Wniosek:
+Wszystkie przedziały ufności obejmują 0. Jest to dodatkowe potwierdzenie 
+wcześniej podjętych decyzji o nieodrzuceniu hipotezy H0.
+
+
+***
+
+
+# Zadanie 2
+
+## Treść zadania
+
+* Korzystając z regresji liniowej wyznacz zależność indeksu WIG20 od kursów 
+zamknięcia spółek COMARCH, ELZAB, GETIN, PEKAO, PGNIG, PZU dla danych z 
+pierwszego kwartału roku 2020.
+
+* Oceń istotność poszczególnych zmiennych objaśniających w tak skonstruowanym 
+modelu.
+* Przeprowadź analogiczne analizy w przypadku uwzględnienia w modelu mniejszej 
+ilości spółek: COMARCH, ELZAB, GETIN.
+
+## Rozwiązanie
+
+
+```{r}
+rm(list=ls())
+```
+
+1. Zapisuję plik mstall.zip do katalogu ADPS/Lab4
+```{r}
+
+if(!file.exists('mstall.zip')) {
+  download.file('http://bossa.pl/pub/metastock/mstock/mstall.zip','mstall.zip')
+}
+```
+
+2. Wczytuję dane do zmiennych dla 6. próbek i wybieram z ramek danych dane 
+dotyczące kursów zamknięcia w zakładanym okresie:
+```{r}
+unzip('mstall.zip', 'WIG20.mst')
+WIG20_ <- read.csv('WIG20.mst')
+names(WIG20_) <- c('ticker', 'date', 'open', 'high', 'low', 'close')
+WIG20_$date = as.Date.character(WIG20_$date, format ='%Y%m%d')
+WIG20 = subset( WIG20_, date >= '2020-01-01' & date < '2020-04-01', 
+                select = c('date', 'close'))
+
+unzip('mstall.zip', 'COMARCH.mst')
+Comarch_ <- read.csv('COMARCH.mst')
+names(Comarch_) <- c('ticker', 'date', 'open', 'high', 'low', 'close', 'vol')
+Comarch_$date = as.Date.character(Comarch_$date, format ='%Y%m%d')
+Comarch = subset( Comarch_, date >= '2020-01-01' & date < '2020-04-01', 
+                  select = c('date', 'close'))
+
+unzip('mstall.zip', 'ELZAB.mst')
+Elzab_ <- read.csv('ELZAB.mst')
+names(Elzab_) <- c('ticker', 'date', 'open', 'high', 'low', 'close', 'vol')
+Elzab_$date = as.Date.character(Elzab_$date, format ='%Y%m%d')
+Elzab = subset( Elzab_, date >= '2020-01-01' & date < '2020-04-01', 
+                select = c('date', 'close'))
+
+unzip('mstall.zip', 'GETIN.mst')
+Getin_ <- read.csv('GETIN.mst')
+names(Getin_) <- c('ticker', 'date', 'open', 'high', 'low', 'close', 'vol')
+Getin_$date = as.Date.character(Getin_$date, format ='%Y%m%d')
+Getin = subset( Getin_, date >= '2020-01-01' & date < '2020-04-01', 
+                select = c('date', 'close'))
+
+unzip('mstall.zip', 'PEKAO.mst')
+Pekao_ <- read.csv('PEKAO.mst')
+names(Pekao_) <- c('ticker', 'date', 'open', 'high', 'low', 'close', 'vol')
+Pekao_$date = as.Date.character(Pekao_$date, format ='%Y%m%d')
+Pekao = subset( Pekao_, date >= '2020-01-01' & date < '2020-04-01', 
+                select = c('date', 'close'))
+
+unzip('mstall.zip', 'PZU.mst')
+Pzu_ <- read.csv('PZU.mst')
+names(Pzu_) <- c('ticker', 'date', 'open', 'high', 'low', 'close', 'vol')
+Pzu_$date = as.Date.character(Pzu_$date, format ='%Y%m%d')
+Pzu  = subset( Pzu_, date >= '2020-01-01' & date < '2020-04-01', 
+               select = c('date', 'close'))
+
+unzip('mstall.zip', 'PGNIG.mst')
+Pgnig_  <- read.csv('PGNIG.mst')
+names(Pgnig_) <- c('ticker', 'date', 'open', 'high', 'low', 'close', 'vol')
+Pgnig_$date = as.Date.character(Pgnig_$date, format ='%Y%m%d')
+Pgnig = subset( Pgnig_, date >= '2020-01-01' & date < '2020-04-01', 
+                select = c('date', 'close'))
+```
+
+3. Zależność indeksu WIG20 od kursów zamknięcia spółek COMARCH, ELZAB, 
+GETIN, PEKAO, PGNIG, PZU dla danych z pierwszego kwartału roku 2020. 
+Sotsuję metodę regresji liniowej:
+```{r}
+
+ALL_df0 = merge(Comarch, Elzab, by = 'date')
+ALL_df0 = merge(ALL_df0, Getin, by = 'date')
+ALL_df0 = merge(ALL_df0, Pekao, by = 'date')
+ALL_df0 = merge(ALL_df0, Pzu, by = 'date')
+ALL_df0 = merge(ALL_df0, Pgnig, by = 'date')
+ALL_df0 = merge(ALL_df0, WIG20, by = 'date')
+
+names(ALL_df0) = c('date','Comarch','Elzab','Getin','Pekao','Pzu', 'Pgnig','WIG20')
+
+lm_res0 = lm(WIG20 ~ Comarch + Elzab + Getin + Pekao + Pzu + Pgnig, data = ALL_df0)
+summary(lm_res0)
+
+```
+
+5. Ocena istotność poszczególnych zmiennych objaśniających w tak skonstruowanym 
+modelu:
+
+Założenie:
+H0 - wsppółczynniki są zerowe.
+H1 - współczynniki są różne od zera.
+
+W zależności od wybranej spółki otrzymujemy p-value wynoszące:
+a) Comarch:  0.08856
+b) Elzab: 0.15875
+c) Getin: 2.50e-08
+d) Pekao: 9.34e-15
+e) Pzu: 2.75e-12
+f) Pgnig: 0.00449
+
+Hipoteza H0 zostanie odrzucona w przypadku Getin, Pekao, Pgnig oraz Pzu.
+W przypadku Comarch oraz Elzab nie ma podstaw do odrzucenia hipotezy H0 
+(gdyż p-value jest większe od $\alpha$ = 0.05).
+
+
+
+
+```{r}
+rm(list=ls())
+```
+
+6. Przeprowadzam analogiczne analizy w przypadku uwzględnienia w modelu 
+mniejszej ilości spółek: COMARCH, ELZAB, GETIN:
+```{r}
+
+unzip('mstall.zip', 'WIG20.mst')
+WIG20_ <- read.csv('WIG20.mst')
+names(WIG20_) <- c('ticker', 'date', 'open', 'high', 'low', 'close')
+WIG20_$date = as.Date.character(WIG20_$date, format ='%Y%m%d')
+WIG20 = subset( WIG20_, date >= '2020-01-01' & date < '2020-04-01', 
+                select = c('date', 'close'))
+
+unzip('mstall.zip', 'COMARCH.mst')
+Comarch_ <- read.csv('COMARCH.mst')
+names(Comarch_) <- c('ticker', 'date', 'open', 'high', 'low', 'close', 'vol')
+Comarch_$date = as.Date.character(Comarch_$date, format ='%Y%m%d')
+Comarch = subset( Comarch_, date >= '2020-01-01' & date < '2020-04-01', 
+                  select = c('date', 'close'))
+
+unzip('mstall.zip', 'ELZAB.mst')
+Elzab_ <- read.csv('ELZAB.mst')
+names(Elzab_) <- c('ticker', 'date', 'open', 'high', 'low', 'close', 'vol')
+Elzab_$date = as.Date.character(Elzab_$date, format ='%Y%m%d')
+Elzab = subset( Elzab_, date >= '2020-01-01' & date < '2020-04-01', 
+                select = c('date', 'close'))
+
+unzip('mstall.zip', 'GETIN.mst')
+Getin_ <- read.csv('GETIN.mst')
+names(Getin_) <- c('ticker', 'date', 'open', 'high', 'low', 'close', 'vol')
+Getin_$date = as.Date.character(Getin_$date, format ='%Y%m%d')
+Getin = subset( Getin_, date >= '2020-01-01' & date < '2020-04-01', 
+                select = c('date', 'close'))
+
+
+```
+
+7. Sotsuję metodę regresji liniowej:
+```{r}
+
+ALL_df7 = merge(Comarch, Elzab, by = 'date')
+ALL_df7 = merge(ALL_df7, Getin, by = 'date')
+ALL_df7 = merge(ALL_df7, WIG20, by = 'date')
+
+names(ALL_df7) = c('date','Comarch','Elzab','Getin','WIG20')
+
+lm_res7 = lm(WIG20 ~ Comarch + Elzab + Getin,  data = ALL_df7)
+summary(lm_res7)
+
+```
+
+8. Ocena istotność poszczególnych zmiennych objaśniających w tak skonstruowanym 
+modelu:
+
+Założenie:
+H0 - wsppółczynniki są zerowe.
+H1 - współczynniki są różne od zera.
+
+W zależności od wybranej spółki otrzymujemy p-value wynoszące:
+a) Comarch: 0.01147
+b) Elzab: 0.00411
+c) Getin: < 2e-16
+
+Ponieważ w żadnym przypadku p-value nie jest większe od $\alpha$ = 0.05,
+mamy podstawę do odrzucenia hipotezy H0 dla wszystkich spółek.
+
+
+
+***
+
+# Zadanie 3
+
+## Treść zadania
+
+Korzystając z regresji liniowej dla danych z pierwszego kwartału roku 2020 
+zbadaj:
+
+* zależność kursu CHF od kursów EUR, USD, GBP, JPY (wykorzystaj dane z pliku 
+mstnbp.zip),
+* zależność indeksu WIG20 od indeksów DAX, DJIA, NIKKEI, FT-SE100 
+(wykorzystaj dane z pliku mstzgr.zip*),
+* zależność pomiędzy kursem USD a indeksami giełdowymi DAX, DJIA, 
+NIKKEI, FT-SE100.
+
+Uwaga: daty notowań w różnych krajach mogą różnić się. 
+Wskazówka dot. stworzenia odpowiedniej ramki z danymi. 
+
+* Stworzenie podramek, np. dla DJIA:
+dane = read_mst('mstzgr.zip', 'DJIA.mst')
+DJIA_df = subset( dane, date >= '2020-01-01' & date < '2020-04-01', 
+select = c('date', 'close'))
+
+* Połączenie danych:
+ALL_df = merge(DJIA_df, NIKKEI_df, by = 'date')
+ALL_df = merge(ALL_df, FT_SE100_df, by = 'date')
+
+itd.
+
+## Rozwiązanie
+
+```{r}
+rm(list=ls())
+```
+
+1. Rozpakowuję archiwum mstnbp.zip i archiwum mstzgr.zip. Wczytuję dane 
+do zmiennych:
+```{r}
+
+rm(list=ls())
+
+read_mst = function(plik_zip, plik_mst) {
+unzip(plik_zip, plik_mst)
+dane = read.csv(plik_mst)
+names(dane) = c('ticker', 'date', 'open', 'high', 'low', 'close', 'vol')
+dane$date = as.Date.character(dane$date,format = '%Y%m%d')
+dane }
+
+dane = read_mst('mstzgr.zip', 'DJIA.mst')
+DJIA_df = subset( dane, date >= '2020-01-01' & date < '2020-04-01', 
+                  select = c('date', 'close'))
+
+dane1 = read_mst('mstzgr.zip', 'DAX.mst')
+DAX_df = subset( dane1, date >= '2020-01-01' & date < '2020-04-01', 
+                 select = c('date', 'close'))
+
+dane2 = read_mst('mstzgr.zip', 'NIKKEI.mst')
+NIKKEI_df = subset( dane2, date >= '2020-01-01' & date < '2020-04-01', 
+                    select = c('date', 'close'))
+
+dane3 = read_mst('mstzgr.zip', 'FT-SE100.mst')
+FTSE100_df = subset( dane3, date >= '2020-01-01' & date < '2020-04-01', 
+                     select = c('date', 'close'))
+
+unzip('mstall.zip', 'WIG20.mst')
+WIG20_ <- read.csv('WIG20.mst')
+names(WIG20_) <- c('ticker', 'date', 'open', 'high', 'low', 'close')
+WIG20_$date = as.Date.character(WIG20_$date, format ='%Y%m%d')
+WIG20_df = subset(WIG20_, date >= '2020-01-01' & date < '2020-04-01', 
+                  select = c('date', 'close'))
+```
+
+
+3. Stosuję metodę regresji liniowej w celu wyznaczenia możliwej zależność 
+indeksu WIG20 od indeksów DAX, DJIA, NIKKEI, FT-SE100:
+```{r}
+ALL_df = merge(DJIA_df, NIKKEI_df, by = 'date')
+ALL_df = merge(ALL_df, FTSE100_df, by = 'date')
+ALL_df = merge(ALL_df, DAX_df, by = 'date')
+ALL_df = merge(ALL_df, WIG20_df, by = 'date')
+
+names(ALL_df) = c('date','DJIA','NIKKEI','FTSE100','DAX', 'WIG20')
+
+lm_res1 = lm(WIG20 ~ DJIA + NIKKEI + FTSE100 + DAX , data = ALL_df)
+cat('Zależność indexu giełdowego WIG20 od pozostałych indexów giełdowych:')
+summary(lm_res1)
+```
+
+Podsumowanie:
+
+
+4. Badam zależność kursu CHF od kursów EUR, USD, GBP, JPY:
+```{r}
+dane4 = read_mst('mstnbp.zip', 'CHF.mst')
+CHF_df = subset( dane4, date >= '2020-01-01' & date < '2020-04-01', 
+                 select = c('date', 'close'))
+
+dane5 = read_mst('mstnbp.zip', 'EUR.mst')
+EUR_df = subset( dane5, date >= '2020-01-01' & date < '2020-04-01', 
+                 select = c('date', 'close'))
+
+dane6 = read_mst('mstnbp.zip', 'USD.mst')
+USD_df = subset( dane6, date >= '2020-01-01' & date < '2020-04-01', 
+                 select = c('date', 'close'))
+
+dane7 = read_mst('mstnbp.zip', 'GBP.mst')
+GBP_df = subset( dane7, date >= '2020-01-01' & date < '2020-04-01', 
+                 select = c('date', 'close'))
+
+dane8 = read_mst('mstnbp.zip', 'JPY.mst')
+JPY_df = subset( dane8, date >= '2020-01-01' & date < '2020-04-01', 
+                 select = c('date', 'close'))
+
+```
+
+5. Stosuję metodę regresji liniowej w celu wyznaczenia możliwej zależność 
+kursu CHF od kursów
+```{r}
+ALL_df1 = merge(EUR_df, USD_df, by = 'date')
+ALL_df1 = merge(ALL_df1, GBP_df, by = 'date')
+ALL_df1 = merge(ALL_df1, JPY_df, by = 'date')
+ALL_df1 = merge(ALL_df1, CHF_df, by = 'date')
+
+names(ALL_df1) = c('date','EUR','USD','GBP','JPY', 'CHF')
+
+lm_res2 = lm(CHF ~ EUR + USD + GBP + JPY , data = ALL_df1)
+cat('Zależność kursu CHF od pozostałych walut: ')
+summary(lm_res2)
+```
+
+Podsumowanie:
+
+Założenie:
+H0 - wsppółczynniki są zerowe.
+H1 - współczynniki są różne od zera.
+
+W zależności od wybranej waluty otrzymujemy p-value wynoszące:
+a) EUR: 9.76e-07
+b) USD: 0.0499
+c) GBP: 0.8586
+d) JPY: 5.10e-12
+
+Jedynie w przypadku GBP  p-value  jest większe od $\alpha$ = 0.05,
+mamy nie mamy podstawy do odrzucenia hipotezy H0 dla tej waluty.
+Hipotezę H0 odrzucimy w pozostałych przypadkach.
+
+
+6. Badam zależność pomiędzy kursem USD a indeksami giełdowymi DAX, DJIA, NIKKEI,
+FT-SE100:
+```{r}
+rm(list=ls())
+
+read_mst = function(plik_zip, plik_mst) {
+unzip(plik_zip, plik_mst)
+dane = read.csv(plik_mst)
+names(dane) = c('ticker', 'date', 'open', 'high', 'low', 'close', 'vol')
+dane$date = as.Date.character(dane$date,format = '%Y%m%d')
+dane }
+
+dane = read_mst('mstzgr.zip', 'DJIA.mst')
+DJIA_df = subset( dane, date >= '2020-01-01' & date < '2020-04-01', 
+                  select = c('date', 'close'))
+
+dane1 = read_mst('mstzgr.zip', 'DAX.mst')
+DAX_df = subset( dane1, date >= '2020-01-01' & date < '2020-04-01', 
+                 select = c('date', 'close'))
+
+dane2 = read_mst('mstzgr.zip', 'NIKKEI.mst')
+NIKKEI_df = subset( dane2, date >= '2020-01-01' & date < '2020-04-01', 
+                    select = c('date', 'close'))
+
+dane3 = read_mst('mstzgr.zip', 'FT-SE100.mst')
+FTSE100_df = subset( dane3, date >= '2020-01-01' & date < '2020-04-01', 
+                     select = c('date', 'close'))
+
+dane6 = read_mst('mstnbp.zip', 'USD.mst')
+USD_df = subset( dane6, date >= '2020-01-01' & date < '2020-04-01', 
+                 select = c('date', 'close'))
+```
+
+7. Stosuję metodę regresji liniowej w celu wyznaczenia możliwej zależność 
+kursu USD a indeksów giełdowych DJIA, DAX, 
+```{r}
+ALL_df1 = merge(DJIA_df, DAX_df, by = 'date')
+ALL_df1 = merge(ALL_df1, FTSE100_df, by = 'date')
+ALL_df1 = merge(ALL_df1, NIKKEI_df, by = 'date')
+ALL_df1 = merge(ALL_df1, USD_df, by = 'date')
+
+names(ALL_df1) = c('date','DJIA','DAX','FTSE100','NIKKEI', 'USD')
+
+lm_res2 = lm(USD ~ DJIA + DAX + FTSE100 + NIKKEI , data = ALL_df1)
+cat('Zależność kursu USD od indeksów giełdowych: ')
+summary(lm_res2)
+```
+
+Podsumowanie:
+
+Podsumowanie:
+
+Założenie:
+H0 - wsppółczynniki są zerowe.
+H1 - współczynniki są różne od zera.
+
+W zależności od wybranej waluty otrzymujemy p-value wynoszące:
+a) DJIA: 3.81e-06
+b) DAX: 0.000335 
+c) FTSE100: 0.000335
+d) NIKKEI: 0.187650  
+
+Jedynie w przypadku TFSE100 oraz NIKKEI  p-value  jest większe od $\alpha$ = 0.05,
+mamy nie mamy podstawy do odrzucenia hipotezy H0 dla tej waluty.
+Hipotezę H0 odrzucimy w pozostałych przypadkach.
+
+
+# Zadanie 4
+
+## Treść zadania
+
+W pliku sprzedaz.txt znajdują się dane dotyczące wydatków na reklamę pewnej 
+firmy (w tys. zł) i wartości sprzedaży jej produktów (w mln zł) w poszczególnych 
+kwartałach.
+
+* Metodą regresji liniowej wyznacz zależność pomiędzy wartością sprzedaży 
+a wydatkami na reklamę. Na jednym wykresie narysuj punkty odpowiadające danym 
+oraz prostą regresji. 
+
+* Oblicz prognozowane wartości sprzedaży, jeśli wydatki na reklamę będą 
+wynosiły: 300, 500, 700 tys. zł.
+
+* Oszacuj odchylenie standardowe błędu z jakim wyznaczono prognozowane wartości 
+sprzedaży dla poszczególnych wartości wydatków na reklamę.
+
+## Rozwiązanie
+
+```{r}
+rm(list=ls())
+```
+
+1. Wczytuję dane z pliku sprzedaz.txt:
+```{r}
+sprzedaz = read.delim('sprzedaz.txt', sep =',')
+x = sprzedaz$Advert
+y = sprzedaz$Income 
+n = length(x)
+```
+
+2. Przyjmuję, że:
+x - zmienna objaśniająca - wydatki na reklamę
+y - wartość objaśniana - wartość sprzedaży
+
+Parametry prostej regresji wyznaczam ze wzoru:
+ 𝑦 = 𝛽1𝑥 + :𝛽0
+
+```{r}
+z1 = (mean(x * y) - mean(x) * mean(y)) / (mean(x^2) - (mean(x))^2)
+cat('Wartość z1: ',z1)
+z0 = mean(y) - z1 * mean(x)
+cat('Wartość z0:', z0)
+y_1 = z1 * x + z0
+cat('Wartość y_1:', y_1)
+```
+
+
+3. Wykres danych z pliku oraz prostej regresji liniowej"
+```{r}
+plot(x, y, xlab = 'wydatki na reklamę', ylab = 'wartość sprzedaży')
+a = c(min(x), max(x))
+fin = z1 * a + z0
+cat('Wartość fin:',fin)
+lines(a, fin, col = 'green')
+```
+
+4. Wyznaczam prognozowane wartości sprzedaży. Przymuję, że wydatki na reklamę 
+będą wynoszą kolejno 300, 500 i 700 (tyś. zł):
+```{r}
+x_2 = c(300, 500, 700)
+y_2 = z1 * x_2 + z0
+
+cat('Gdzie x_2:', x_2)
+cat('Gdzie y_2:', y_2)
+```
+
+5. Szacuję odchylenie standardowe błędu z jakim wyznaczono prognozowane 
+wartości sprzedaży dla poszczególnych wartości wydatków na reklamę. 
+Wykonuję obliczenia sprawdzające:
+```{r}
+s2 = 1/(n - 2) * sum((y - y_1)^2)
+s2_y_est = s2 * (1 + 1/n + (mean(x) - x_2)^2/(n * (mean(x^2) - mean(x)^2)))
+s_y_est = sqrt(s2_y_est)
+
+
+cat('Gdzie s2:', s2)
+cat('Gdzie s2_y_est:', s2_y_est)
+cat('Gdzie s_y_est:', s_y_est)
+
+lm_res = lm(y ~ x)
+summary(lm_res)
+predict(lm_res, data.frame(x = x_2), se = T)
+
+```
+
+Prognozy wydatków na reklamy:
+Dla wydatków na reklamę równych:
+300 tys. zł, gdzie oczekiwana sprzedaż to  9,57 mln zł
+500 tys. zł, gdzie oczekiwana sprzedaż to 12,5 mln zł
+700 tys. zł, gdzie oczekiwana sprzedaż to 15,43 mln zł
+
+
+
+***
+
+# Zadanie 5 
+
+## Treść zadania
+
+* Dla danych z pliku sprzedaz.txt zbadaj czy lepszym modelem zależności między 
+wartością wydatków na reklamę (w tys. zł) a wartością sprzedaży (w mln zł) 
+byłaby zależność kwadratowa.
+
+* Nanieś odpowiednią linię przedstawiającą tę zależność na rysunek z danymi 
+oraz prostą regresji wyznaczoną w poprzednim punkcie.
+
+
+1. Wykonuję obliczenia metodą lm:
+
+```{r}
+#dane x oraz y z zadania nr 4
+
+plot(x, y, xlab = 'Wydatki na reklamę [tys. zł]', ylab = 'Wartość sprzedaży 
+     [mln zł]')
+
+abline(lm_res, col = 'green')  # wywołana z zadania nr 4 pkt. 3
+lm_res_new = lm(y ~ x + I(x^2))
+summary(lm_res_new)
+
+
+eq = function(x){lm_res_new$coefficients[1] + lm_res_new$coefficients[2] * x + 
+    lm_res_new$coefficients[3] * x * x }
+curve(eq, from = min(x), to = max(x), add = T, col = 'red') 
+# czerwona nałożona na wykres razem z zieloną linią z zadania nr 4
+
+```
+
+Podsumowanie:
+
+Z obliczeń wynika, że oraz p-value = 0.8423. Przyjmuję poziom istotności 
+𝛼 = 0.05   Współczynnik dopasowania R2 =  0.9327 jest większy od R2  =  0.9141
+z zadania nr 4. Zależność kwadratowa będzie lepszym wyborem niż zależność
+liniowa (z zadania nr 4). Sugeruje to również wykres z zadania nr 5.

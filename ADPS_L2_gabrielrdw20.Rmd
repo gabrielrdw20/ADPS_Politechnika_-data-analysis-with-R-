@@ -1,0 +1,401 @@
+---
+title: "ADPS 20L --- Ćwiczenie 2"
+author: "Gabriel R."
+output:
+  pdf_document: default
+  html_notebook: default
+  html_document: default
+---
+  
+```{r, echo=FALSE}
+pdf.options(encoding='ISOLatin2')
+```
+
+# Zadanie 1
+
+## Treść zadania
+
+* Dopasuj do danych rozkład Poissona - wyestymuj parametr $\lambda$.
+* Metodą bootstrapu nieparametrycznego oszacuj odchylenie standardowe 
+estymatora parametru $\lambda$.
+* Sprawdź zgodność rozkładu o wyestymowanym parametrze $\lambda$
+z zarejestrowanymi danymi porównując graficznie empiryczną i teoretyczną 
+funkcję prawdopodobieństwa. Użyj funkcji table() i dpois() analogicznie 
+jak w przykładzie 4 laboratorium 1.
+
+
+## Rozwiązanie
+
+1. Ustawiam ścieżkę do folderu roboczego:
+```{r}
+setwd('~/ADPS/Lab2')
+```
+
+2. Wczytuję dane za pomocą komendy scan('skrety.txt'):
+
+```{r}
+x <- scan('./skrety.txt')
+n <- length(x)
+```
+
+3. Dopasowuję do danych rozkład Poissona - estymowuję parametr $\lambda$:
+
+```{r}
+x_mean <- mean(x)
+lambda_1 <- x_mean
+```
+
+4. Metodą bootstrapu nieparametrycznego szacuję odchylenie standardowe
+estymatora parametru $\lambda$: 
+```{r}
+K <- 1000
+boot_res <- replicate(K, {
+  boot_dane = sample(x, n, replace = T)
+  mean(boot_dane)
+})
+sd_mean <- sd(boot_res)
+
+```
+
+5. Sprawdaqm zgodność rozkładu o wyestymowanym parametrze $\lambda$
+z zarejestrowanymi danymi porównując graficznie empiryczną i teoretyczną 
+funkcję prawdopodobieństwa. Używam funkcji table() i dpois() analogicznie
+jak w przykładzie 4 laboratorium 1. 
+
+* Kolory na wykresie:
+a) czerwony - empiryczna funkcja prawdopodobieństwa
+b) zielony - teorytyczna funkcja prawdopodobieństwa
+
+```{r}
+Arg = 0:max(x)
+Freq = as.numeric(table(factor(x, levels = Arg))) / n
+
+# empiryczna funkcja prawdopodobieństwa
+plot(Freq ~ Arg, type = 'h', col = 'red', xlab = 'x', ylab = 'f(x)', 
+     main = 'Funkcja prawdopodobieństwa')
+
+# teoretyczna funkcja prawdopodobieństwa
+points(Freq ~ Arg, col = 'green')
+lines(dpois(Arg, lambda_1) ~ Arg, type = 'h', col = 'red', xlab = 'x',
+ylab = 'f(x)')
+points(dpois(Arg, lambda_1) ~ Arg, col = 'red')
+```
+
+
+# Zadanie 2
+
+## Treść zadania
+
+* Dla wybranej jednej spółki notowanej na GPW oblicz wartości procentowych
+zmian najwyższych cen w dniu (high) i wykreśl ich histogram – zweryfikuj
+zgrubnie, czy możemy przyjąć, że procentowe zmiany najwyższych cen w dniu mają
+rozkład normalny.
+* Wyestymuj wartość średnią oraz wariancję procentowych zmian  najwyższych cen
+w dniu dla wybranej spółki.
+* Zakładając, że zmiany najwyższych cen w dniu mają rozkład normalny wyznacz
+90%, 95% i 99% przedziały ufności dla wartości średniej i wariancji
+procentowych zmian najwyższych cen w dniu dla wybranej spółki.
+
+
+## Rozwiązanie
+
+1. Pobieram plik z danymi giełdowymi spółek (plik mstall.zip) do katalogu
+roboczego:
+
+```{r}
+  if(!file.exists('mstall.zip')) {
+  download.file('http://bossa.pl/pub/metastock/mstock/mstall.zip','mstall.zip')
+  }
+```
+
+2. Wybieram spółkę KGHM:
+
+```{r}
+unzip('mstall.zip','KGHM.mst')
+df_KGHM <- read.csv('KGHM.mst')
+```
+
+3. Obliczam wartości procentowych zmian najwyższych cen w dniu (high), 
+wykreślam ich histogram – weryfikuję zgrubnie, czy możemy przyjąć,
+że procentowe zmiany najwyższych cen w dniu mają rozkład normalny:
+```{r}
+names(df_KGHM) <- c('ticker', 'date', 'open', 'high', 'low', 'close','vol')
+
+df_KGHM$date <- as.Date.character(df_KGHM$date, format ='%Y%m%d')
+df_KGHM$high_ch <- with(df_KGHM, c(NA, 100*diff(high)/high[-length(high)]))
+plot(high_ch ~ date, df_KGHM, type = 'l', col = 'blue', xlab = 'Lata', 
+     ylab = 'Wartość procentowa zmian najwyższych cen w danym dniu',
+     main = 'KGHM' )
+```
+
+```{r}
+hist(df_KGHM$high_ch, breaks = 30, prob = T,
+xlab = 'Zmiana najwyższej ceny dnia [%] ',
+ylab = 'Częstość występowania',
+main = 'Histogram dla spółki KGHM' )
+grid()
+```
+
+Można przyjąć, że kszałt histogramu wskazuje na rozkład normalny
+(rozkład Gaussa) co widać na histogramie poniżej. Rozkład o charakterystycznym
+kszałcie dzwonu.
+
+4. Estymuję wartość średnią oraz wariancję procentowych zmian najwyższych cen
+w dniu dla wybranej spółki:
+```{r}
+mKGHM <- mean(df_KGHM$high_ch, na.rm = T)
+vKGHM <- var(df_KGHM$high_ch, na.rm = T)
+```
+
+5. Zakładając, że zmiany najwyższych cen w dniu mają rozkład normalny wyznaczam
+90%, 95% oraz 99% przedziały ufności dla wartości średniej i wariancji
+procentowych zmian najwyższych cen w dniu dla wybranej spółki:
+
+a) 90% przedział ufności:
+
+```{r}
+lev <- 0.90
+S <- sd(df_KGHM$high_ch, na.rm = T)
+w <- S*qt((1+lev)/2, n-1/sqrt(n))
+ci_mean <- c(mKGHM - w, mKGHM +w)
+a <- (1 - lev)/2
+b <- (1 - lev)/2
+ci_var <- c((n-1)*S^2/qchisq(1-b,n-1), (n-1)*S^2/qchisq(a,n-1))
+```
+
+b) 95% przedział ufności:
+
+```{r}
+lev <-  0.95
+S <- sd(df_KGHM$high_ch, na.rm = T)
+w <- S*qt((1+lev)/2, n-1/sqrt(n))
+ci_mean = c(mKGHM - w, mKGHM +w)
+a <- (1 - lev)/2
+b <- (1 - lev)/2
+ci_var <- c((n-1)*S^2/qchisq(1-b,n-1), (n-1)*S^2/qchisq(a,n-1))
+```
+
+c) 99% przedział ufności:
+
+```{r}
+lev <- 0.99
+S <- sd(df_KGHM$high_ch, na.rm = T)
+w <- S*qt((1+lev)/2, n-1/sqrt(n))
+ci_mean <- c(mKGHM - w, mKGHM +w)
+a <- (1 - lev)/2
+b <- (1 - lev)/2
+ci_var <- c((n-1)*S^2/qchisq(1-b,n-1), (n-1)*S^2/qchisq(a,n-1))
+```
+
+
+# Zadanie 3
+
+## Treść zadania
+
+Rzucona pinezka upada ostrzem do dołu lub do góry. Doświadczenie to można
+opisać rozkładem Bernoulliego
+z parametrem $p$ będącym prawdopodobieństwem tego, że pinezka upadnie ostrzem
+do góry. Rozkład parametru $p$ można opisać rozkładem Beta o parametrach
+$\alpha$ i $\beta$.
+
+* Zaproponuj parametry rozkładu a priori parametru $p$ oraz określ wartość
+oczekiwaną tego rozkładu.
+* Narysuj rozkład a priori parametru $p$.
+* Rzuć pinezką 20 razy i zanotuj wyniki kolejnych rzutów. 
+* Wyznacz i narysuj rozkład a posteriori parametru $p$ oraz oblicz wartość
+bayesowskiego estymatora $\hat{p}$ .
+
+W rozważanym przypadku rozkład aposteriori parametru $p$ jest również rozkładem
+Beta o parametrach:
+
+ $$ \alpha_{\textrm{post}} = \alpha_{\textrm{prior}} + \sum_{i=1}^n x_i,\quad
+ \beta_{\textrm{post}} = \beta_{\textrm{prior}} + n - \sum_{i=1}^n x_i,\qquad
+  x_i\in\{0,1\}.$$
+
+
+* Rzuć pinezką jeszcze 20 razy i zanotuj wyniki.
+* Wyznacz i narysuj rozkład a posteriori oparty na wszystkich 40 rzutach oraz
+oblicz wartość bayesowskiego estymatora $\hat{p}$ .
+* Porównaj wyniki z wynikami uzyskanymi po pierwszych 20 rzutach.
+* Korzystając ze wzoru na wariancję rozkładu Beta wyznacz i porównaj wariancje
+rozkładu a priori, a posteriori po 20 rzutach i a posteriori po 40 rzutach.
+
+
+## Rozwiązanie
+
+1. Proponuję parametry rozkładu parametru $p$ oraz określam wartość oczekiwaną
+tego rozkładu. Przyjmuję, że ostrze pinezki ułożone w górę to 1, a ostrze
+pinezki ułożone w dół to 0.
+
+* Zapisuję model próbkowy. Dobieram parametry *a priori*.
+
+- parametry ${a priori}$ parametru $p$:
+$\alpha_{priori}$ = 7 (dla ułożenia w górę: 1)
+$\beta_{priori}$ = 3 (dla ułożenia w dół: 0)
+
+Wartość oczekiwana dla *a priori*:
+
+```{r}
+alfa <- 7
+beta_1 <- 3 # ewentualnie beta_1= (alfa/p)-alfa
+p <- 0.7 
+exp_val <- 1 / (1 + (alfa/beta_1))
+```
+
+2. Rysuję rozkład *a priori* parametru $p$.
+
+```{r}
+curve ( dbeta(x, alfa, beta_1 ), col = 'Green')
+```
+
+3. Rzucam pinezką 20 razy i notuję wyniki kolejnych rzutów:
+
+```{r}
+rb <- rbinom(20,1,0.7)
+length_20 <- length(rb)
+```
+
+4. Wyznaczam i rysuję rozkład *a posteriori* parametru $p$ oraz obliczam
+wartość bayesowskiego estymatora $\hat{p}$:
+
+```{r}
+a_post <- alfa + sum(rb)
+b_post <- beta_1 + length_20 - sum(rb)
+expected_posteriori = a_post/ (a_post + b_post)
+curve ( dbeta(x, a_post, b_post ), col = 'Blue', 0,1)
+```
+
+5. Rzucam pinezką jeszcze 20 razy i notuję wyniki:
+
+```{r}
+rb2 <- rbinom(20,1,0.7)
+```
+
+6. Wyznaczam i rysuję rozkład *a posteriori* oparty na wszystkich 40 rzutach
+oraz obliczam wartość bayesowskiego estymatora $\hat{p}$:
+
+```{r}
+length_20_2  <-length(rb2)
+a_posteriori <- alfa + sum(rb2)
+b_posteriori <- beta_1 + length_20_2 - sum(rb2)
+expecter_posteriori2 <- a_posteriori/ (a_posteriori + b_posteriori)
+```
+
+7. Porównuję wyniki z wynikami uzyskanymi po pierwszych 20 rzutach, gdzie:
+* *a priori* to  kolor czerwony 
+* *a posteriori* po 20 rzutach to kolor zielony
+* *a posteriori* po 40 rzutach to kolor niebieski:
+
+```{r}
+curve ( dbeta(x, a_posteriori, b_posteriori ), col = 'Blue', 0,1, ylab="f(x)")
+curve ( dbeta(x, a_post, b_post ), add = T,col = 'Green', 0,1)
+curve ( dbeta(x, alfa, beta_1 ),add = T, col = 'Red', 0,1)
+```
+
+8. Korzystając ze wzoru na wariancję rozkładu Beta wyznaczam i porównuję
+wariancje rozkładu *a priori*, 
+*a posterior* po 20 rzutach oraz *a posteriori* po 40 rzutach:
+
+```{r}
+apriori_var <- alfa*beta_1/((alfa+beta_1+1)*(alfa+beta_1)^2)
+aposteriori_20 <- a_post*b_post/((a_post+b_post+1)*(a_post+b_post)^2)
+aposteriori_40 <- a_posteriori*b_posteriori/((a_posteriori+b_posteriori+1)
+                  *(a_posteriori+b_posteriori)^2)
+```
+
+
+***
+
+# Zadanie 4
+
+## Rozwiązanie
+
+1. Wczytuję plik 'fotony.txt':
+
+```{r}
+fotony <- scan('~/ADPS/Lab2/fotony.txt')
+```
+
+2. Metodą momentów oraz metodą największej wiarygodności wyznaczam estymatory 
+parametrów rozkładu gamma odpowiadające zarejestrowanym danym:
+
+* Metoda momentów:
+
+```{r}
+m1 <- mean(fotony)
+m2 <- mean(fotony^2)
+alpha_mom <- m1^2/(m2 - m1^2)
+beta_mom <- (m2 - m1^2)/m1
+```
+
+* Przy pomocy równania:
+
+```{r}
+funkcja <- function(x) digamma(x) - log(x) - mean(log(fotony)) +
+  log(mean(fotony))
+alpha_nw_1 <- uniroot(funkcja, lower = 0.5, upper = 4)$root
+beta_nw_1 <- mean(fotony)/alpha_nw_1
+```
+
+3. Rysuję na jednym wykresie histogram odstępów oraz funkcje gęstości rozkładu
+gamma o parametrach wyestymowanych za pomocą obu metod.
+**UWAGA: Linie wykresów pokrywają się.**
+
+```{r}
+hist(fotony, breaks = 30, prob = T, xlab = 'Odstęp czasu', ylab = 'Gęstość')
+x <- fotony
+curve(dgamma(x, shape = alpha_mom , scale = beta_mom),
+      add = T, col = 'red', 0, 500)
+curve(dgamma(x, shape = alpha_nw_1 , scale = beta_nw_1),
+      add = T, col = 'green', 0, 500)
+```
+
+4. Metodą bootstrapu parametrycznego wyznaczam dla obu metod odchylenia
+standardowe estymatorów parametrów bootstrapu parametrycznego: 
+
+* Metoda momentów:
+
+```{r}
+Z <- 1000
+boot_mom_2 <- replicate(Z, {
+data_boot <- rgamma(length(fotony),shape = alpha_mom,scale = beta_mom)
+m1_boot <- mean(data_boot)
+m2_boot <- mean(data_boot^2)
+alpha_boot <- m1_boot^2/(m2_boot - m1_boot^2)
+beta_boot <- (m2_boot - m1_boot^2)/m1_boot
+c(alpha_boot,beta_boot)
+})
+```
+
+* Metoda najawiększej wiarygodności:
+```{r}
+boot_nw_2 <- replicate(Z, {
+data_boot <- rgamma(length(fotony), shape = alpha_nw_1, scale = beta_nw_1)
+funkcja <- function(x)
+digamma(x) - log(x) - mean(log(data_boot)) + log(mean(data_boot))
+alpha_boot_nw <- uniroot (funkcja, lower = 0.5, upper = 4)$root
+beta_boot_nw <- mean(data_boot)/alpha_boot_nw
+c(alpha_boot_nw,beta_boot_nw)
+})
+```
+
+Odchylenie standardowe:
+
+```{r}
+alpha_moment_sd <- sd(boot_mom_2[1,])
+beta_moment_sd <- sd(boot_mom_2[2,])
+alpha_nw_sd <- sd(boot_nw_2[1,])
+beta_nw_sd <- sd(boot_nw_2[2,])
+```
+
+5. Metodą bootstrapu parametrycznego wyznaczam dla obu metod przedziały
+ufności na poziomie ufności 95%:
+
+```{r}
+lev <- 0.95
+alpha_trust_moment <- quantile(boot_mom_2[1,], c((1-lev)/2,(1+lev)/2))
+beta_trust_moment <- quantile(boot_mom_2[2,], c((1-lev)/2,(1+lev)/2))
+alpha_trust_nw <- quantile(boot_nw_2[1,], c((1-lev)/2,(1+lev)/2))
+beta_trust_nw <- quantile(boot_nw_2[2,], c((1-lev)/2,(1+lev)/2))
+```
+

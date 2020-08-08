@@ -1,0 +1,554 @@
+---
+title: "ADPS 20L --- Ćwiczenie 3 - rozwiązania"
+author: "Gabriel R."
+output:
+  pdf_document: 
+    latex_engine: xelatex
+  html_document: default
+  html_notebook: default
+---
+
+```{r, echo=FALSE}
+pdf.options(encoding='ISOLatin2')
+```
+
+# Zadanie 1
+
+## Treść zadania
+
+Osobno dla mężczyzn i kobiet:
+
+* wyestymuj wartość średnią i odchylenie standardowe temperatury,
+* zweryfikuj hipotezę, że średnia temperatura jest równa 36.6 $^\circ$C 
+wobec hipotezy alternatywnej, że średnia temperatura jest inna, przyjmując,
+że temperatury mają rozkład normalny,
+* przeprowadź testy normalności dla zarejestrowanych temperatur.
+
+## Rozwiązanie
+
+### 1. Wczytuję dane z pliku tempciala.txt (wypisano tylko 10 początkowych):
+```{r}
+dane <- read.csv('tempciala.txt', header = T)
+head(dane, n=10)
+```
+
+
+### 2. Estymuję wartość średnią i odchylenie standardowe temperatury:
+a) dla mężczyzn:
+```{r}
+t_men = dane[1:65, 'temperatura']
+t_men #Temperatura mężczyzn
+
+sr_t_men <- mean(t_men)
+cat('Średnia temperatura mężczyzn: ')
+print(sr_t_men)
+
+sd_t_men <- sd(t_men)
+cat('Odchylenie standardowe temperatury mężczyzn')
+print(sd_t_men)
+```
+
+b) dla kobiet:
+```{r}
+t_women <- dane[66:130, 'temperatura']
+t_women #Temperatura kobiet
+
+sr_t_women <- mean(t_women)
+cat('Srednia temperatura kobiet: ',sr_t_women)
+
+sd_t_women<- sd(t_women)
+cat('Odchylenie standardowe temperatury kobiet: ',sd_t_women)
+```
+
+
+### 3. Weryfikuję hipotezę H0 wobec hipotezy H1, gdzie:
+
+* H0 - średnia temperatura jest równa 36.6 $^\circ$C
+* H1 - średnia temperatura nie jest równa 36.6 $^\circ$C
+
+Założenie: temperatury mają rozkład normalny.
+
+
+```{r}
+alpha <- c(0.01, 0.05)
+n <- 65
+c_1 <- qt(1-alpha[1]/2,df = n-1); print(c_1)
+c_5 <- qt(1-alpha[2]/2,df = n-1); print(c_5)
+
+ha_men <- (sr_t_men - 36.6)*sqrt(n)/sd_t_men
+ha_women <- (sr_t_women - 36.6)*sqrt(n)/sd_t_women
+
+cat('Obliczenia wykonanie dla próbki złożonej z mężczyzn: ', ha_men)
+cat('Obliczenia wykonanie dla próbki złożnej z kobiet: ', ha_women)
+cat('Wartość progu dla alpha równego 0.01: ', c_1)
+cat('Wartość progu dla alpha równego 0.05: ', c_5) 
+
+p_men <- 2*(1 - pt(ha_men, n-1))
+cat('P-value dla próbki złożonej z mężczyzn: ', p_men)
+
+p_women <- 2*(1 - pt(ha_women, n-1))
+cat('P-value dla próbki złożonej z kobiet: ', p_women)
+
+t.test(t_men, mu = 36.6)
+t.test(t_women, mu = 36.6)
+```
+
+### Wniosek:
+
+Przyjmuję następująco dla hipotez:
+
+* H0 - Średnia wartość tempreatury ciała na próbie mężczyzn oraz (odrębnie)
+kobiet jest równa 36,6 $^\circ$C. 
+
+* H1 - Średnia wartość tempreatury ciała na próbie mężczyzn oraz (odrębnie)
+kobiet nie jest równa jest 36,6 $^\circ$C. 
+
+Zabrałem dla porównania dwa poziomy istotności, $\alpha$ = 0.01 oraz 
+$\alpha$ = 0.05 (najczęściej stosowane).
+
+W dalszych zadaniach będziemy dla uproszczenia rozpatrywać jedynie 
+$\alpha$ = 0.05.
+
+Dla poziomu istotności $\alpha$ = 0.01:
+
+1) Grupa mężczyzn: Wynik dla tej próbki to 2.619895, czyli p-value > $\alpha$.
+
+2) Grupa kobiet: Wynik da tej próbki to 5.649745, czyli p-value > .
+
+Podsumowanie: W przypadku którejkolwiek z grup nie ma podstaw do odrzucenia
+hipotezy H0.
+
+
+Dla poziomu istotności $\alpha$ = 0.05:
+
+1) Grupa mężczyzn: Wynik tej próbki to 2.619895, zatem p-value > $\alpha$.
+
+2) Grupa kobiet: Wynik tej próbki to 5.649745, zatem p-value > $\alpha$.
+
+Podsumowanie: W przypadku którejkolwiek z grup nie ma podstaw do odrzucenia
+hipotezy H0.
+
+
+### 4. Przeprowadzam testy normalności dla zarejestrowanych temperatur:
+
+a) testem Shapiro-Wilka:
+```{r}
+men <- shapiro.test(t_men) 
+women <- shapiro.test(t_women)
+
+cat('Test Shapiro-Wilka dla próbki złożonej z mężczyzn:')
+print(men)
+cat('Test Shapiro-Wilka dla próbki złożonej z kobiet:')
+print(women)
+```
+
+### Wnioski:
+
+Sprawdzam, czy rozkład jest rozkładem Gaussa (e.g. rozkładem normalnym).
+W tym przypadku interesuje mnie, czy p-value >  $\alpha$ ($\alpha$ = 0.05) 
+dla danej grupy.
+
+Przyjmuję następująco dla hipotez:
+
+* H0 - rozkład jest rozkładem normalnym.
+* H1 - rozkład jest różny od rozkładu normalnego.
+
+1) Dla grupy męzyczyzn: p-value = 0.4818, czyli p-value > $\alpha$.
+Nie ma podstaw do odrzucenia hipotezy H0.
+
+2) Dla grupy kobiet: p-value = 0.03351, czyli p-value < $\alpha$.
+Odrzucam hipotezę H0.
+
+
+
+b) testem Kołmogorova-Smirnova (test nieparametryczny):
+```{r}
+ks.test(t_men, 'pnorm', mean = sr_t_men, sd = sd_t_men)
+ks.test(t_women, 'pnorm', mean = sr_t_women, sd = sd_t_women)
+```
+
+### Wnioski:
+
+Przyjąłem następująco:
+
+* H0 - badany rozkład jest rozkładem normalnym.
+* H1 - bdany rozkład jest różny od rozkładu normalnego.
+
+Poziom istotności $\alpha$ =  0.05:
+
+1) Dla grupy mężczyzn: p-value = 0.6883, zatem p-value > $\alpha$.
+Nie ma podstaw do odrzucenia hipotezy H0.
+
+2) Dla grupy kobiet: p-value = 0.3049, zatem p-value > $\alpha$.
+Nie ma podstaw do odrzucenia hipotezy H0.
+
+
+
+***
+
+# Zadanie 2
+
+## Treść zadania
+
+W tabeli przedstawionej poniżej zawarto dane dot. liczby samobójstw w Stanach
+Zjednoczonych w 1970 roku z podziałem na poszczególne miesiące.
+
+| Miesiąc     | Liczba samobójstw | Liczba dni |
+| :---        |          :----:   |   :----:   |
+| Styczeń     | 1867              | 31         |
+| Luty        | 1789              | 28         |
+| Marzec      | 1944              | 31         |
+| Kwiecień    | 2094              | 30         |
+| Maj         | 2097              | 31         |
+| Czerwiec    | 1981              | 30         |
+| Lipiec      | 1887              | 31         |
+| Sierpień    | 2024              | 31         |
+| Wrzesień    | 1928              | 30         |
+| Październik | 2032              | 31         |
+| Listopad    | 1978              | 30         |
+| Grudzień    | 1859              | 31         |
+
+Zweryfikuj czy zamieszczone w niej dane wskazują na sezonową zmienność liczby
+samobójstw, czy raczej świadczą o stałej intensywności badanego zjawiska.
+Przyjmij, że w przypadku stałej intensywności liczby samobójstw, liczba
+samobójstw w danym miesiącu jest proporcjonalna do liczby dni w tym miesiącu.
+
+## Rozwiązanie
+```{r}
+rm(list=ls())
+samobojstwa <- c(1867, 1789, 1944, 2094, 2097, 1981, 1887, 2024, 1928, 2032,
+                1978, 1859)
+cat('samobojstwa: ', samobojstwa)
+dni  <- c(31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31)
+cat('dni: ', dni)
+s <- 12
+alpha <- c(0.01, 0.05)
+dni2 <- dni/ sum(dni)
+n <- sum(samobojstwa); print(n)
+c_5_ <- qchisq(1 - alpha[2], s - 1)
+T1 <- sum((samobojstwa - n*dni2)^2 / (n*dni2))
+cat('Wartość dlaT1: ',T1)
+cat('Wartość progu dla alpha równego 0.05: ',c_5_)
+p_value = (1 - pchisq(T1, s-1))
+cat('P-wartość: ',p_value)
+chi_ <- chisq.test(samobojstwa,p = dni2)
+print('Wyniki testu Chi Kwadrat: ')
+chi_
+```
+***
+
+### Wnioski:
+
+W badaniu przyjmuję, że:
+
+* H0 - dane są zależne (dane wskazują na stałą intensywność liczby
+samobójstw)
+
+* H1 - dane nie są zależne (dane wskazują na sezonową zmienność liczby
+samobójstw) 
+
+Dla poziomu istotności $\alpha$ = 0.05 sprawdzamy p-value.
+P-value = 0.000001852, zatem p-value < $\alpha$. Oznacza to,
+że odrzucamy hipotezę H0. 
+
+
+# Zadanie 3
+
+## Treść zadania
+
+Dla wybranej spółki notowanej na GPW wczytaj dane ze strony bossa.pl
+* oblicz wartości procentowych zmian najniższych cen w poszczególnych dniach
+roku 2019. Wykreśl ich histogram i narysuj funkcję gęstości prawdopodobieństwa
+rozkładu normalnego o parametrach wyestymowanych na podstawie ich wartości,
+* zweryfikuj hipotezę, że procentowe zmiany najniższych cen w poszczególnych
+dniach roku 2019 mają rozkład normalny.
+
+## Rozwiązanie
+
+* Znajduję i pobieram dane historyczne spółek giełdowych z portalu 
+[http://www.bossa.pl](www.bossa.pl)
+(zakładka Notowania & wykresy;
+  Dane do programów AT -> Metastock -> Wszystkie grupy GPW
+  -> baza danych w formacie tekstowym -> mstall.zip)
+[http://bossa.pl/pub/metastock/mstock/mstall.zip](bossa.pl/pub/metastock/
+mstock/mstall.zip)
+
+* Zapisuję plik mstall.zip do katalogu ADPS/Lab3
+```{r}
+if(!file.exists('mstall.zip')) {
+  download.file('http://bossa.pl/pub/metastock/mstock/mstall.zip','mstall.zip')
+}
+```
+
+### Wybieram spółkę KGHM
+* Rozpakowuję w tym katalogu dane spółki KGHM:
+```{r}
+unzip('mstall.zip', 'KGHM.mst')
+```
+
+* Wczytuję plik i zmieniam nazwy kolumn:
+```{r}
+df <- read.csv('KGHM.mst')
+names(df) <- c('ticker', 'date', 'open', 'high', 'low', 'close', 'vol')
+
+```
+
+* Zmiany najniższych cen dnia w zależności od daty dla danej spółki
+```{R}
+df$date = as.Date.character(df$date, format ='%Y%m%d')
+df=df[df$date >= "2019-01-01" & df$date <= "2019-12-31",]
+df$low_ch= with(df, c(NA, 100*diff(low)/low[-length(low)]))
+```
+
+* Wartość średnia oraz wariancja procentowych zmian najniższych cen w dniu
+dla wybranej spółki:
+```{r}
+m_n = mean(df$low_ch, na.rm = T)
+v_r = var(df$low_ch, na.rm = T)
+
+cat('Średnia: ', m_n)
+cat('Wariancja: ', v_r)
+
+```
+
+* Tworzę histogram procentowych zmian najniższych cen dnia dla spółki KGHM:
+(niebieska linia przedstawia funkcję prawdopodobieństwa rozkładu normalnego)
+
+```{r}
+
+hist(df$low_ch,
+     breaks = 40, prob = T, lwd = 1.5,
+     xlab = 'Zmiana najniższej ceny dnia [%] ',
+     ylab = 'Częstość',
+     main = 'Histogram - KGHM')
+
+curve(dnorm(x, mean = m_n, sd = sqrt(v_r)), add = T, col = 'blue', -25, 25)
+grid()
+
+```
+
+* Test Shaphiro-Wilka dla wyselekcjonowanych danych:
+```{r}
+ shapiro.test(df$low_ch[0:5000]) 
+```
+
+Dane okrojone z uwagi na wymgania testu (min 3, max 5000 rekordów).
+
+### Wnioski:
+
+Sprawdzam, czy rozkład jest rozkładem Gaussa (e.g. rozkładem normalnym).
+Chcemy otrzymać wartości nieistotne statystyczne (p-val > $\alpha$, gdzie 
+$\alpha$ =0.05), ponieważ świadczyłyby one o zgodności rozkładu zmiennej
+z rozkładem normalnym.
+
+Przyjmuję następująco dla hipotez:
+
+* H0 - procentowe zmiany najniższych cen w poszczególnych dniach roku 2019
+mają rozkład normalny.
+
+* H1 - procentowe zmiany najniższych cen w poszczególnych dniach roku 2019
+nie mają rozkładu normalnego.
+
+Otrzymaliśmy p-value = 0.00312, zatem p_value < $\alpha$.
+Odrzcucam zatem hipotezę H0.
+
+b) testem Kołmogorova-Smirnova (test nieparametryczny):
+```{r}
+ks.test(df$low_ch, 'pnorm', mean = m_n, sd = sqrt(v_r))
+```
+
+### Wnioski:
+
+Przyjąłem następująco:
+
+* H0 - badany rozkład jest rozkładem normalnym.
+* H1 - bdany rozkład jest różny od rozkładu normalnego.
+
+Poziom istotności $\alpha$ =  0.05:
+
+1) Dla grupy mężczyzn: p-value = 0.2076, zatem p-value > $\alpha$.
+Nie ma podstaw do odrzucenia hipotezy H0.
+***
+
+# Zadanie 4
+
+## Treść zadania
+
+W pliku [lozyska.txt](http://elektron.elka.pw.edu.pl/~mrupniew/adps/lozyska.txt)
+podane są czasy (w milionach cykli) pracy (do momentu uszkodzenia) łożysk 
+wykonywanych z dwóch różnych materiałów.
+
+* Przeprowadź test braku różnicy między czasami pracy łożysk wykonanych
+z różnych materiałów, zakładając że czas pracy do momentu uszkodzenia opisuje
+się rozkładem normalnym.
+* Przeprowadź analogiczny test, bez zakładania normalności rozkładów.
+* **(dla chętnych)** *Oszacuj prawdopodobieństwo tego, że łożysko wykonane
+z pierwszego materiału będzie pracowało dłużej niż łożysko wykonane z materiału
+drugiego.*
+
+## Rozwiązanie
+
+### 1 Wczytuję plik lozyska.txt:
+```{r}
+rm(list=ls())
+lozyska = read.csv('lozyska.txt', header = T)
+boxplot(lozyska, col = c('blue', 'pink'))
+x = lozyska[,1]; print(x)
+x1 = lozyska[,2]; print(x1)
+n = length(x); print(n) 
+```
+
+### 2. Wyznaczam rozkład normalny:
+```{r}
+m <- mean(x)
+m1 <- mean(x1)
+s_1 <- var(x)
+s_2 <- var(x1);
+s <- (s_1 + s_2)/n
+T3 <- (m - m1)/sqrt(s)
+print(T3)
+d <- s^2/((s_1^2 + s_2^2)/((n-1)*n^2))
+cat('Liczba stopni swobody: ',d,'\n')
+p_val <- (1 - pt(abs(T3), d))*2
+cat('P-value: ', p_val)
+alpha <- 0.05
+c <- qt(1 - alpha/2, d)
+cat('Wartość progu c dla alpha równego 0.05')
+print(c)
+print(t.test(x,x1)) # Test t Welcha
+```
+
+
+### Realizuję kolejny test, tym razem bez założenia o normalności rozkładów:
+```{r}
+cat('Test Wilcoxona','\n')
+print(wilcox.test(x,x1))
+```
+
+Wniosek:
+Wyliczone p-value = 0.06301, zatem przy założonym $/alpha$ = 0.05 mamy
+p-value > $/apha$.
+
+Przyjmuję następujące hipotezy:
+H0 - x = x1 (równośĆ wartości średnich dla obu łożysk)
+H1 - x != x1  (brak równości wartości średnich dla obu łożysk
+
+Skoro p-val > $/alpha$ to nie ma podstawy do odrzucenia hipotezy H0.
+
+### 3a. Szacuję prawdopodobieństwo dla próby n = 100000 metodą nr 1:
+```{r}
+n <- 100000
+a <- sample(x, n, replace = T)
+b <- sample(x1, n, replace = T)
+c <- a > b
+
+prawd1 <- sum(c)/n
+print(prawd1)
+```
+
+### 3b. Szacuję prawdopodobieństwo dla próby n = 100000 metodą nr 2:
+```{r}
+aa <- 0
+for (i in 1:length(x)) {
+  for (v in 1:length(x1)) {
+    z = x[i] > x1[v]
+    aa = aa + z
+  }
+}
+prawd2 <- aa/(length(x)*length(x1)); print(prawd2)
+```
+
+
+### Wnioski:
+Na wstępię przyjęto następujące założenia:
+H0 - x = x1 (nie ma istotnej różnicy w rozkładach zmiennych)
+H1 - x != x1 (rozkłady zmiennych różnią się istotnie)
+
+P-value = 0.05407936, czyli p-value > $/alpha$
+Wartość progu c = 2.113054
+Liczba stopni swobody = 16.66467
+Wartość modułu statystyki |T| = 2,0732
+
+ONie ma podstaw do odrzucenia hipotezy H0, ponieważ |T| > c nie znajduje się
+w wyznaczonym obszarze krytycznym. Dodatkowo należy zwrócić uwagę, że
+p-val > $/alpga$.
+odanie 5 
+
+## Treść zadania
+
+Korzystając z danych zawartych na stronie pl.fcstats.com zweryfikuj hipotezę
+o niezależności wyników (zwycięstw, remisów i porażek) gospodarzy od kraju,
+w którym prowadzone są rozgrywki piłkarskie.
+
+* Dane znajdują się w zakładce Porównanie lig -> Zwycięzcy meczów, w kolumnach
+(bez znaku [%]):
+    * 1 – zwycięstwa gospodarzy, np. dla Bundesligi 97,
+    * x – remisy, np. dla Bundesligi 49,
+    * 2 – porażki gospodarzy, np. dla Bundesligi 78.
+
+* Testy przeprowadź na podstawie danych dotyczących lig:
+    * polskiej – Ekstraklasa,
+    * angielskiej – Premier League,
+    * hiszpańskiej – Primera Division,
+    * niemieckiej – Bundesliga.
+
+## Rozwiązanie
+
+### 1. Znajduję aktualne dane na stronie pl.fcstats.com i wpisuję do wektorów:
+
+```{r}
+PL <- c(104, 48, 56)
+SP <- c(129, 75, 66)
+DE <- c(97, 49, 78)
+EN <- c(129, 72, 87)
+```
+
+### 2. Łączę dane w jeden wektor:
+```{r}
+all <- cbind(PL,SP,DE,EN)
+print(all)
+```
+
+```{r}
+u <- PL + SP + DE + EN
+q <- c(sum(PL), sum(SP), sum(DE), sum(EN))
+n <- sum(q)
+T2 <- 0
+a1 <- 3
+a2 <-4
+
+for (i in 1:a1)
+  {for (j in 1:a2)  {T2 = T2 + (n*all[i,j] - u[i]*q[j])^2/ (n*u[i]*q[j])}}
+cat('Wartość statystyki T: ',T2)
+
+alfa <- 0.05
+c <- qchisq(1-alfa, df = (a1-1)*(a2-1))
+cat('Próg: ',c)
+```
+
+### 3. Realizuję test Chi Kwadrat:
+```{r}
+final <- chisq.test(cbind(PL,SP,DE,EN))
+print(final)
+```
+
+### Wnioski:
+Otrzymane wartości:
+- p-value = 0.2158
+- prób c = 12.59159
+- statystyki T = 8.31625
+
+W badaniu przyjmuję, że:
+
+* H0 - Wyniki (zwycięstw, remisów i porażek) gospodarzy są niezaeżne od kraju,
+w którym prowadzone są rozgrywki piłkarskie.
+
+* H1 - Wyniki (zwycięstw, remisów i porażek) gospodarzy są zależne od kraju,
+w którym prowadzone są rozgrywki piłkarskie.
+
+Ponieważ przyjęliśmy poziom istotności $\alpha$ = 0.05 oraz otrzymaliśmy
+p-value = 0.2158 (czyli p-value > $\alpha$), oznacza to, że nie ma podstawy
+do odrzucenia hipotezy H0.
+
+
+***
